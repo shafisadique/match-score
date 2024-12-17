@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard</title>
+    <style>
+        body {
+            font-family: 'Roboto Slab', serif;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .scoreboard {
+            width: 100%;
+            height: 400px;
+            margin: 0;
+            background-color: #2b3a47;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 15%;
+            background-color: #2c3e50;
+            padding: 10px 20px;
+            margin: 0;
+            font-size: 18px;
+            border-radius: 8px;
+        }
+
+        .ball-sequence {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ball {
+            background-color: #27ae60;
+            color: #fff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .ball.wide {
+            background-color: #f39c12;
+        }
+
+        .ball-chalu {
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #f1c40f;
+        }
+
+    .match-details {
+    width: 100%;
+    height: 40%;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    align-items: center;
+    margin: auto;
+    text-align: center;
+    flex-wrap: wrap;
+    position: relative; /* For pseudo-element positioning */
+    z-index: 1; /* Ensure text appears above the background */
+    }
+
+    .match-details::before {
+    content: ""; /* Empty pseudo-element for background */
+    background-image: url('background.jpg'); /* Use correct image path */
+    background-size: cover; /* Cover the entire container */
+    background-repeat: no-repeat;
+    opacity: 0.6; /* Semi-transparent background */
+    position: absolute; /* Cover the parent container */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Place background behind the content */
+    border-radius: 10px; /* Optional: match container's border radius */
+}
+
+
+        .match-details .team {
+            margin: 0;
+        }
+
+        .match-details p {
+            margin: 0;
+            font-size: 16px;
+            color: #f1f1f1;
+        }
+        .team-score-details{
+            display: flex;
+        }
+        .team h3 {
+            color: #6fcf97;
+            margin: 0;
+        }
+
+        .stats-table {
+            width: 100%;
+            height: 40%;
+            margin: 10px auto;
+            text-align: center;
+            border-collapse: collapse;
+            font-family: 'Roboto Slab', serif;
+            color: #fff;
+        }
+
+        .stats-table th, .stats-table td {
+            padding: 8px 12px;
+            font-size: 16px;
+        }
+
+        .stats-table th {
+            font-weight: bold;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="scoreboard">
+        <div class="header">
+            <div class="ball-sequence" id="ball-sequence"></div>
+            <div class="ball-chalu">Ball Chalu</div>
+        </div>
+
+        <div class="match-details">
+            <div class="team">
+                <h3 id="team1-name"></h3>
+                <div class="team-score-details">
+                    <p id="team1-score"></p>
+                    <p id="team1-wicket"></p>
+                    <p id="team1-over"></p>
+                </div>
+                <p id="team1-rr"></p>
+            </div>
+            <div class="vs">
+                <p>VS</p>
+                <p id="match-info"></p>
+            </div>
+            <div class="team">
+                <h3 id="team2-name"></h3>
+                <div class="team-score-details">
+                    <p id="team2-score"></p>
+                    <p id="team2-wicket"></p>
+                    <p id="team2-over"></p>
+                </div>
+                <p id="team2-rr"></p>
+            </div>
+        </div>
+        <div class="player-stats">
+            <table class="stats-table" id="player-stats">
+                <tr>
+                    <th>Name</th>
+                    <th>Run</th>
+                    <th>Sixes</th>
+                    <th>Fours</th>
+                    <th>SR</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Function to get query parameters from URL
+        function getMatchIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('matchId'); // Extract 'matchId' parameter
+        }
+
+        // Fetch matchId from URL
+        const matchId = getMatchIdFromUrl();
+
+        if (!matchId) {
+            console.error('Error: matchId is not specified in the URL');
+        } else {
+            const apiUrl = `https://score.jeoad.com/api/v1/getScore?matchId=${matchId}`;
+
+            async function fetchDataAndUpdateUI() {
+                try {
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+
+                    console.log("Fetched Data:", data); // Debugging output
+
+                    // Extract and update team details
+                    const team1 = data?.data[2]?.team1 || "N/A";
+                    const team2 = data?.data[2]?.team2 || "N/A";
+                    const score1 = data?.data[2]?.score?.trim() || "0";
+                    const score2 = data?.data[2]?.score2?.trim() || "0";
+                    const wicket1 = data?.data[2]?.wicket || "0";
+                    const wicket2 = data?.data[2]?.wicket2 || "0";
+                    const matchInfo =data?.data[0]?.cb;
+                    const balls1 = data?.data[2]?.ballsdone || 0;
+                    const balls2 = data?.data[2]?.ballsdone2 || 0;
+
+                    const overs1 = Math.floor(balls1 / 6) + "." + (balls1 % 6);
+                    const overs2 = Math.floor(balls2 / 6) + "." + (balls2 % 6);
+
+                    document.getElementById("team1-name").innerText = team1;
+                    document.getElementById("team2-name").innerText = team2;
+                    document.getElementById("team1-score").innerText = score1;
+                    document.getElementById("team2-score").innerText = score2;
+                    document.getElementById("team1-wicket").innerText = `/ ${wicket1}`;
+                    document.getElementById("team2-wicket").innerText = `/ ${wicket2}`;
+                    document.getElementById("team1-over").innerText = ` (${overs1})`;
+                    document.getElementById("team2-over").innerText = `(${overs2})`;
+                    document.getElementById("match-info").innerText = `${matchInfo}`;
+                    
+                    // Update recent balls
+                    const ballSequenceDiv = document.getElementById("ball-sequence");
+                    const recentBalls = data?.data[0]?.recentBalls?.[0] || [];
+                    ballSequenceDiv.innerHTML = ""; // Clear old content
+
+                    recentBalls.forEach((ball) => {
+                        const ballDiv = document.createElement("div");
+                        ballDiv.className = "ball";
+                        ballDiv.innerText = ball;
+                        if (ball.toLowerCase() === "wd") ballDiv.classList.add("wide");
+                        ballSequenceDiv.appendChild(ballDiv);
+                    });
+
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                }
+            }
+
+            // Fetch data every second
+            setInterval(fetchDataAndUpdateUI, 1000);
+            fetchDataAndUpdateUI(); // Initial call
+        }
+    </script>
+</body>
+</html>
+
+
